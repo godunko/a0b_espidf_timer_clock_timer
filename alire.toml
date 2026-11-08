@@ -1,0 +1,24 @@
+name = "a0b_espidf_timer_clock_timer"
+version = "0.1.0-dev"
+website = "https://github.com/godunko/a0b_espidf_timer_clock_timer"
+description = "A0B: Clock and Timer implementation on ESP-IDF Timer"
+long-description = """
+"""
+
+authors = ["Vadim Godunko"]
+maintainers = ["Vadim Godunko <vgodunko@gmail.com>"]
+maintainers-logins = ["godunko"]
+licenses = "Apache-2.0 WITH LLVM-exception"
+tags = ["a0b", "embedded", "esp", "esp32", "espidf", "clock", "timer"]
+
+project-files = ["a0b_time_platform.gpr", "a0b_timer_platform.gpr"]
+
+provides = ["a0b_time_platform=0.1.0", "a0b_timer_platform=0.1.0"]
+
+[configuration]
+generate_ada = false
+generate_c = false
+generate_gpr = true
+
+[[depends-on]]
+espidfada = "*"

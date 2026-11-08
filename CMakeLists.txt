@@ -1,0 +1,1 @@
+idf_component_register(SRCS source/a0b_espidf_timer_clock_timer.c REQUIRES esp_timer)

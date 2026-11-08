@@ -1,0 +1,14 @@
+--
+--  Copyright (C) 2024-2026, Vadim Godunko <vgodunko@gmail.com>
+--
+--  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+--
+
+pragma Restrictions (No_Elaboration_Code);
+
+with A0B.ESPIDF_Timer_Clock_Timer.Internals;
+
+function A0B.Time.Clock return A0B.Time.Monotonic_Time is
+begin
+   return A0B.ESPIDF_Timer_Clock_Timer.Internals.Clock;
+end A0B.Time.Clock;

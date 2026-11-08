@@ -40,11 +40,15 @@ package body A0B.ESPIDF_Timer_Clock_Timer is
    with Import, Convention => C, External_Name => "esp_timer_restart";
 
    function Initialize_Timer
-     (Callback   : esp_timer_cb_t;
-      Out_Handle : out esp_timer_handle_t) return ESPIDF.esp_err_t
+     (Callback : esp_timer_cb_t; Out_Handle : out esp_timer_handle_t)
+      return ESPIDF.esp_err_t
    with Import, Convention => C, External_Name => "__a0b_espidf_timer_INIT";
 
    Timer_Handle : esp_timer_handle_t;
+
+   procedure Restart (Timeout_us : ESPIDF.uint64_t);
+   --  Restart the timer with the given timeout in microseconds, or start it
+   --  if it is not already running.
 
    procedure Timer_Callback (Arg : System.Address)
    with Convention => C;
@@ -78,16 +82,8 @@ package body A0B.ESPIDF_Timer_Clock_Timer is
    ---------------------------
 
    procedure Internal_Request_Tick is
-      use type ESPIDF.esp_err_t;
-
-      Error : ESPIDF.esp_err_t;
-
    begin
-      Error := esp_timer_restart (Timer_Handle, 1);
-
-      if Error = ESPIDF.ESP_ERR_INVALID_STATE then
-         ESPIDF.Ada_ESP_Check_Error (esp_timer_start_once (Timer_Handle, 1));
-      end if;
+      Restart (1);
    end Internal_Request_Tick;
 
    -----------------------
@@ -97,16 +93,34 @@ package body A0B.ESPIDF_Timer_Clock_Timer is
    procedure Internal_Set_Next
      (Span : A0B.Time.Time_Span; Success : out Boolean)
    is
-      use type ESPIDF.esp_err_t;
       use type ESPIDF.int64_t;
 
    begin
-      Success :=
-        esp_timer_start_once
-          (Timer_Handle,
-           ESPIDF.uint64_t (A0B.Time.To_Nanoseconds (Span) / 1_000))
-        = ESPIDF.ESP_OK;
+      --  A callback can enqueue a timeout and arm the timer via Request_Tick
+      --  before On_Tick calls Set_Next again.
+
+      Restart (ESPIDF.uint64_t (A0B.Time.To_Nanoseconds (Span) / 1_000));
+      Success := True;
    end Internal_Set_Next;
+
+   -------------
+   -- Restart --
+   -------------
+
+   procedure Restart (Timeout_us : ESPIDF.uint64_t) is
+      use type ESPIDF.esp_err_t;
+
+      Error : ESPIDF.esp_err_t;
+
+   begin
+      Error := esp_timer_restart (Timer_Handle, Timeout_us);
+
+      if Error = ESPIDF.ESP_ERR_INVALID_STATE then
+         Error := esp_timer_start_once (Timer_Handle, Timeout_us);
+      end if;
+
+      ESPIDF.Ada_ESP_Check_Error (Error);
+   end Restart;
 
    --------------------
    -- Timer_Callback --
